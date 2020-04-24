@@ -44,27 +44,48 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>6</LangVersion>
+    <CodeAnalysisRuleSet>ControlModule.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
+    <CodeAnalysisRuleSet>ControlModule.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\netstandard.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\protobuf-net.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Sandbox.Common">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Sandbox.Game">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Sandbox.Graphics">
       <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Graphics.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="SpaceEngineers.Game">
       <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.Game.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="SpaceEngineers.ObjectBuilders">
       <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\System.Collections.Immutable.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -74,24 +95,56 @@
     </Reference>
     <Reference Include="VRage">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VRage.Audio">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Audio.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="VRage.Game">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Game.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="VRage.Input">
       <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Input.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="VRage.Library">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Library.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="VRage.Math">
       <HintPath>C:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Math.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VRage.Native">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Native.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VRage.Render">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Render.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VRage.Render11">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Render11.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VRage.Steam">
+      <HintPath>C:\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Steam.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ControlModule.cs" />
+    <Compile Include="BlockLogic.cs" />
+    <Compile Include="ControlModuleMod.cs" />
     <Compile Include="InputHandler.cs" />
     <Compile Include="Log.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\..\..\..\..\_SharedCode\SEWhitelistChecker.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ControlModule.ruleset" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

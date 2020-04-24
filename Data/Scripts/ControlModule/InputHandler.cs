@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
 using System.Text;
 using Sandbox.Game;
 using Sandbox.ModAPI;
-using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.ModAPI;
 using VRage.Utils;
@@ -119,11 +118,11 @@ namespace Digi
 
     public static class InputHandler
     {
+        public static ImmutableDictionary<string, Type> inputsImmutable = null;
         public static Dictionary<string, object> inputs = null;
         public static Dictionary<object, string> inputNames = null;
         public static Dictionary<string, string> inputNiceNames = null;
         public static List<object> inputValuesList = null;
-        public static List<string> inputAnalogList = null;
         public static Dictionary<MyStringId, object> gamepadBindings = null;
         public static Dictionary<object, char> xboxCodes = null;
         public const string MOUSE_PREFIX = "m.";
@@ -299,10 +298,16 @@ namespace Digi
                 {GAMEPAD_PREFIX+"j16", MyJoystickButtonsEnum.J16},
                 {GAMEPAD_PREFIX+"rotz+", MyJoystickAxesEnum.RotationZpos},
                 {GAMEPAD_PREFIX+"rotz-", MyJoystickAxesEnum.RotationZneg},
+                {GAMEPAD_PREFIX+"rotz+analog", GAMEPAD_PREFIX+"rotz+analog"},
+                {GAMEPAD_PREFIX+"rotz-analog", GAMEPAD_PREFIX+"rotz-analog"},
                 {GAMEPAD_PREFIX+"slider1+", MyJoystickAxesEnum.Slider1pos},
                 {GAMEPAD_PREFIX+"slider1-", MyJoystickAxesEnum.Slider1neg},
+                {GAMEPAD_PREFIX+"slider1+analog", GAMEPAD_PREFIX+"slider1+analog"},
+                {GAMEPAD_PREFIX+"slider1-analog", GAMEPAD_PREFIX+"slider1-analog"},
                 {GAMEPAD_PREFIX+"slider2+", MyJoystickAxesEnum.Slider2pos},
                 {GAMEPAD_PREFIX+"slider2-", MyJoystickAxesEnum.Slider2neg},
+                {GAMEPAD_PREFIX+"slider2+analog", GAMEPAD_PREFIX+"slider2+analog"},
+                {GAMEPAD_PREFIX+"slider2-analog", GAMEPAD_PREFIX+"slider2-analog"},
                 
                 // game controls
                 {CONTROL_PREFIX+"view", CONTROL_PREFIX+"view"},
@@ -324,6 +329,7 @@ namespace Digi
                 {CONTROL_PREFIX+"inventory", MyControlsSpace.INVENTORY},
                 {CONTROL_PREFIX+"controlmenu", MyControlsSpace.CONTROL_MENU},
                 {CONTROL_PREFIX+"factions", MyControlsSpace.FACTIONS_MENU},
+                {CONTROL_PREFIX+"contractscreen", MyControlsSpace.ACTIVE_CONTRACT_SCREEN},
                 {CONTROL_PREFIX+"lookleft", MyControlsSpace.ROTATION_LEFT},
                 {CONTROL_PREFIX+"lookright", MyControlsSpace.ROTATION_RIGHT},
                 {CONTROL_PREFIX+"lookup", MyControlsSpace.ROTATION_UP},
@@ -338,7 +344,7 @@ namespace Digi
                 {CONTROL_PREFIX+"lookaround", MyControlsSpace.LOOKAROUND},
                 {CONTROL_PREFIX+"cameramode", MyControlsSpace.CAMERA_MODE},
                 {CONTROL_PREFIX+"buildmenu", MyControlsSpace.BUILD_SCREEN},
-                {CONTROL_PREFIX+"cockpitbuild", MyControlsSpace.COCKPIT_BUILD_MODE},
+                {CONTROL_PREFIX+"buildplanner", MyControlsSpace.BUILD_PLANNER},
                 {CONTROL_PREFIX+"paint", MyControlsSpace.CUBE_COLOR_CHANGE},
                 {CONTROL_PREFIX+"switchleft", MyControlsSpace.SWITCH_LEFT}, // previous color or cam
                 {CONTROL_PREFIX+"switchright", MyControlsSpace.SWITCH_RIGHT}, // next color or cam
@@ -380,6 +386,7 @@ namespace Digi
                 {CONTROL_PREFIX+"specfree", MyControlsSpace.SPECTATOR_FREE},
                 {CONTROL_PREFIX+"specstatic", MyControlsSpace.SPECTATOR_STATIC},
                 
+                //{CONTROL_PREFIX+"wheeljump", MyControlsSpace.WHEEL_JUMP}, // not in game controls
                 // unknown controls:
                 //{CONTROL_PREFIX+"pickup", MyControlsSpace.PICK_UP},
                 //{CONTROL_PREFIX+"copypaste", MyControlsSpace.COPY_PASTE_ACTION},
@@ -397,18 +404,46 @@ namespace Digi
                 //{CONTROL_PREFIX+"secondarybuildaction", MyControlsSpace.SECONDARY_BUILD_ACTION},
             };
 
-            inputAnalogList = new List<string>()
-            {
-                {MOUSE_PREFIX+"analog"},
-                {MOUSE_PREFIX+"x"},
-                {MOUSE_PREFIX+"y"},
-                {MOUSE_PREFIX+"scroll"},
+            var inputsImmutableBuilder = ImmutableDictionary.CreateBuilder<string, Type>();
 
-                {GAMEPAD_PREFIX+"lsanalog"},
-                {GAMEPAD_PREFIX+"rsanalog"},
-                {GAMEPAD_PREFIX+"ltanalog"},
-                {GAMEPAD_PREFIX+"rtanalog"},
-            };
+            foreach(var kv in inputs)
+            {
+                Type type = null;
+                var custom = kv.Value as string;
+
+                if(custom != null)
+                {
+                    switch(custom)
+                    {
+                        case InputHandler.CONTROL_PREFIX + "view":
+                        case InputHandler.CONTROL_PREFIX + "movement":
+                        case InputHandler.MOUSE_PREFIX + "analog":
+                            type = typeof(Vector3);
+                            break;
+                        case InputHandler.GAMEPAD_PREFIX + "lsanalog":
+                        case InputHandler.GAMEPAD_PREFIX + "rsanalog":
+                            type = typeof(Vector2);
+                            break;
+                        case InputHandler.MOUSE_PREFIX + "x":
+                        case InputHandler.MOUSE_PREFIX + "y":
+                        case InputHandler.MOUSE_PREFIX + "scroll":
+                        case InputHandler.GAMEPAD_PREFIX + "ltanalog":
+                        case InputHandler.GAMEPAD_PREFIX + "rtanalog":
+                        case InputHandler.GAMEPAD_PREFIX + "rotz+analog":
+                        case InputHandler.GAMEPAD_PREFIX + "rotz-analog":
+                        case InputHandler.GAMEPAD_PREFIX + "slider1+analog":
+                        case InputHandler.GAMEPAD_PREFIX + "slider1-analog":
+                        case InputHandler.GAMEPAD_PREFIX + "slider2+analog":
+                        case InputHandler.GAMEPAD_PREFIX + "slider2-analog":
+                            type = typeof(float);
+                            break;
+                    }
+                }
+
+                inputsImmutableBuilder.Add(kv.Key, type);
+            }
+
+            inputsImmutable = inputsImmutableBuilder.ToImmutable();
 
             inputNames = new Dictionary<object, string>();
             inputValuesList = new List<object>();
@@ -505,6 +540,18 @@ namespace Digi
             inputNiceNames[GAMEPAD_PREFIX + "rsdown"] = "Right Stick Down";
             inputNiceNames[GAMEPAD_PREFIX + "rsleft"] = "Right Stick Left";
             inputNiceNames[GAMEPAD_PREFIX + "rsright"] = "Right Stick Right";
+            inputNiceNames[GAMEPAD_PREFIX + "rotz+"] = "Rotation Z+";
+            inputNiceNames[GAMEPAD_PREFIX + "rotz-"] = "Rotation Z-";
+            inputNiceNames[GAMEPAD_PREFIX + "rotz+analog"] = "Rotation Z+ (analog)";
+            inputNiceNames[GAMEPAD_PREFIX + "rotz-analog"] = "Rotation Z- (analog)";
+            inputNiceNames[GAMEPAD_PREFIX + "slider1+"] = "Slider1+";
+            inputNiceNames[GAMEPAD_PREFIX + "slider1-"] = "Slider1-";
+            inputNiceNames[GAMEPAD_PREFIX + "slider1+analog"] = "Slider1+ (analog)";
+            inputNiceNames[GAMEPAD_PREFIX + "slider1-analog"] = "Slider1- (analog)";
+            inputNiceNames[GAMEPAD_PREFIX + "slider2+"] = "Slider2+";
+            inputNiceNames[GAMEPAD_PREFIX + "slider2-"] = "Slider2-";
+            inputNiceNames[GAMEPAD_PREFIX + "slider2+analog"] = "Slider2+ (analog)";
+            inputNiceNames[GAMEPAD_PREFIX + "slider2-analog"] = "Slider2- (analog)";
 
             inputNiceNames[CONTROL_PREFIX + "view"] = "View (analog)";
             inputNiceNames[CONTROL_PREFIX + "movement"] = "Movement (analog)";
@@ -632,21 +679,8 @@ namespace Digi
 
         public static bool IsInputReadable()
         {
-            // TODO detect properly: escape menu, F10 and F11 menus, mission screens, yes/no notifications.
-
             var GUI = MyAPIGateway.Gui;
-
-            if(GUI.ChatEntryVisible || GUI.GetCurrentScreen != MyTerminalPageEnum.None)
-                return false;
-
-            try // HACK ActiveGamePlayScreen throws NRE when called while not in a menu
-            {
-                return GUI.ActiveGamePlayScreen == null;
-            }
-            catch(Exception)
-            {
-                return true;
-            }
+            return !GUI.ChatEntryVisible && !GUI.IsCursorVisible;
         }
 
         public static void AppendNiceNamePrefix(string key, object obj, StringBuilder str)
@@ -769,6 +803,48 @@ namespace Digi
                             if(any == (Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Zneg)) > EPSILON))
                                 return any;
                             break;
+                        case InputHandler.GAMEPAD_PREFIX + "rotz+analog":
+                            {
+                                var v = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationZpos);
+                                if(any == (Math.Abs(v) > EPSILON))
+                                    return any;
+                                break;
+                            }
+                        case InputHandler.GAMEPAD_PREFIX + "rotz-analog":
+                            {
+                                var v = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationZneg);
+                                if(any == (Math.Abs(v) > EPSILON))
+                                    return any;
+                                break;
+                            }
+                        case InputHandler.GAMEPAD_PREFIX + "slider1+analog":
+                            {
+                                var v = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1pos);
+                                if(any == (Math.Abs(v) > EPSILON))
+                                    return any;
+                                break;
+                            }
+                        case InputHandler.GAMEPAD_PREFIX + "slider1-analog":
+                            {
+                                var v = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1neg);
+                                if(any == (Math.Abs(v) > EPSILON))
+                                    return any;
+                                break;
+                            }
+                        case InputHandler.GAMEPAD_PREFIX + "slider2+analog":
+                            {
+                                var v = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2pos);
+                                if(any == (Math.Abs(v) > EPSILON))
+                                    return any;
+                                break;
+                            }
+                        case InputHandler.GAMEPAD_PREFIX + "slider2-analog":
+                            {
+                                var v = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2neg);
+                                if(any == (Math.Abs(v) > EPSILON))
+                                    return any;
+                                break;
+                            }
                         case InputHandler.MOUSE_PREFIX + "scrollup":
                             if(any == MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0)
                                 return any;
@@ -883,7 +959,7 @@ namespace Digi
             if(gamepadBindings.ContainsKey(control))
             {
                 var obj = gamepadBindings[control];
-                
+
                 if(obj is MyJoystickButtonsEnum)
                 {
                     return (newPress ? MyAPIGateway.Input.IsJoystickButtonNewPressed((MyJoystickButtonsEnum)obj) : MyAPIGateway.Input.IsJoystickButtonPressed((MyJoystickButtonsEnum)obj));
